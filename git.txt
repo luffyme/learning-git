@@ -1,0 +1,523 @@
+配置git
+    git config --global user.name "John Doe"
+    git config --global user.email johndoe@example.com
+    git config --local                                      //只针对某个仓库有效
+    git config --global                                     //只对当前用户所有仓库有效
+    git config --system                                     //对系统所有登陆用户有效
+    git config --list                                       //查看所有的配置
+
+	/etc/gitconfig  										//包含系统上每一个用户及他们仓库的通用配置。 如果使用带有 --system 选项的 git config 时，它会从此文件读写配置变量。	
+	~/.gitconfig 或者 ~/.config/git/config  				//只针对当前用户。 可以传递 --global 选项让 Git 读写此文件。
+	.git/config  											//针对该仓库。
+
+    设置别名
+        git config --global alias.co checkout
+        git config --global alias.br branch
+        git config --global alias.ci commit
+        git config --global alias.st status
+        git config --global alias.unstage 'reset HEAD --'
+        git config --global alias.ulog 'log --pretty=format:"%h - %an, %ar - %s" -n 20 --stat'
+		git config --global alias.slog 'log -n 20 --stat --graph --all'
+
+基础操作
+	git clone git://github.com/schacon/grit.git
+	git clone git://github.com/schacon/grit.git mygrit
+
+    初始化git仓库
+    git init project_name
+
+    git add demo.file               //提交一个文件到暂存区
+    git add .                       //提交所有文件到暂存区
+
+    git rm name 					//删除工作区与暂存区文件
+	git rm --cached readme.txt		//仅删除暂存区内容，保留工作区内容
+    git mv a_name b_name            //文件重命名，相当于下面三个命令
+		mv a_name b_name
+		git rm a_name
+		git add b_name
+		
+
+    git commit 
+    git commit -m "change log"      //将暂存区的文件提交到版本区
+    git commit -a -m 'change log'   //将所有的文件放入暂存区，然后再提交到版本去，这两步一次完成(修改的文件必须存在暂存区)
+    git commit --amend    		    //修改上次提交的message
+
+查看现在仓库状态
+    git status                      //查看状态
+
+查看提交log
+    git log --pretty=format:"%h - %an, %ar - %s" -n 20 --stat
+        %H  提交对象（commit）的完整哈希字串
+        %h  提交对象的简短哈希字串
+        %T  树对象（tree）的完整哈希字串
+        %t  树对象的简短哈希字串
+        %P  父对象（parent）的完整哈希字串
+        %p  父对象的简短哈希字串
+        %an 作者（author）的名字
+        %ae 作者的电子邮件地址
+        %ad 作者修订日期（可以用 -date= 选项定制格式）
+        %ar 作者修订日期，按多久以前的方式显示
+        %cn 提交者(committer)的名字
+        %ce 提交者的电子邮件地址
+        %cd 提交日期
+        %cr 提交日期，按多久以前的方式显示
+        %s  提交说明
+		
+		--stat 仅显示简要的增改行数统计
+    git log                     //查看log
+    git log --oneline           //每一次提交记录一行
+    git log -n10                //最近10行
+    git log --oneline --graph   //图形化log
+    git log --oneline master    //指定分支查看log   
+    git reflog                  //查看之前所有进行的log
+	
+	reflog 数据是保存在 .git/logs/ 目录下的
+
+差异查看操作
+    git diff                                        //工作区与暂存区的不同
+    git diff --cached(--staged)                     //暂存区与版本区的差异
+    git diff master                                 //工作区与版本区的差异
+    git diff HEAD -- readme.txt                     //查看工作区与版本区的区别
+    git diff HEAD^ HEAD                             //查看上次提交与上上次提交区别
+    git diff SHA1 SHA2                              //对比两次提交之间的区别        
+分支操作
+    git branch                                      //查看所有的分支 前面带星号的说明是现在所处的分支
+    git branch -v                                   //查看本地分支
+    git branch -av                                  //查看本地与远端所有的分支
+    git branch new1                                 //新增一个分支new1
+    git checkout new1                               //切换到new1分支上去
+    git checkout -b testing                         //创建testing分支，并且切换到testing分支上
+    git branch -d testing                           //删除分支testing，与master的版本合并后才能删除，但是可以使用-D强制删除
+    git merge testing                               //合并testing分支到当前分支。
+    git push origin 本地分支名:远程分支名             //将本地分支推送到远程分支
+
+    分支合并
+        merge
+            git checkout master
+            git merge branch        	//将branch分支合并到当前分支，如果满足fast forward，则使用fast forward模式合并
+			git merge branch --no-ff 	//将branch分支合并到当前分支，不使用fast forward模式
+        rebase(变基)
+            git checkout master
+            git rebase branch       //xxxxxxxxx
+
+
+            git checkout branch
+            git rebase master       //现将master上的变更应用到branch分支上
+            git checkout master 
+            git merge branch        //然后将master合并branch分支内容，其实就是将master移动到最新的地方
+
+            如果rebase出现合并冲突的时候,手动修正,然后执行下面的命令
+            git add . 
+            git rebase --continue 
+
+            rebase的原理是回到两个分支最近的共同祖先，将branch上面的变更在master上面重放一遍。
+
+            git rebase --abort 忽略rebase操作。还原
+
+还原文件    
+    git commit -m "change" --amend 将上次的提交撤回，然后与这次一起提交
+
+    git checkout --readme.txt意思就是，把readme.txt文件在工作区的修改全部撤销，这里有两种情况：
+    一种是readme.txt自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
+    一种是readme.txt已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
+    总之，就是让这个文件回到最近一次git commit或git add时的状态。
+    git checkout -- readme.txt
+    git checkout commit_id file 还原某个文件 
+
+    git checkout branch名的本质，其实是把 HEAD 指向指定的 branch，然后签出这个 branch 所对应的 commit 的工作目录。
+    所以同样的，checkout 的目标也可以不是 branch，而直接指定某个 commit
+
+    reset 后面加了 --hard 参数时，移动HEAD指针，并且你的stage区和工作目录里的内容会被完全重置为和HEAD的新位置相同的内容。换句话说，就是你的没有commit的修改会被全部擦掉。
+    git reset --hard HEAD^      //回到上个版本
+    git reset --hard HEAD~2     //回到上两个版本
+    git reset --hard 3628164    //回到commit_id为3628164的版本
+
+    reset 后面加了 --mixed 参数时,移动HEAD指针，并且工作目录的修改、暂存区的内容以及由 reset 所导致的新的文件差异，都会被放进工作目录
+    git reset --mixed HEAD
+
+    reset 后面加了 --soft 参数时, 仅仅移动当前Head指针，不会改变工作区和暂存区的内容 
+    git reset --soft HEAD^      //移动当前HEAD指针到上个版本 
+
+    将8b89621019c9adc6fc4d242cd41daeb13aeb9861版本反向处理，也就是撤销该版本的改动，然后生成新的版本提交
+    git revert -n 8b89621019c9adc6fc4d242cd41daeb13aeb9861
+    git commit -m "revert add text.txt"
+
+rebase 
+    git rebase -i commitid              //-i代表指交互模式， commitid是基准id，以此commitid之后的提交
+    
+    --  修改commit message
+        修改历史的提交是可能有风险的，是否有风险取决于commit是否已经推送远程分支，未推送，无风险，如果已推送，就千万不要修改commit了。
+        修改commit历史，不是在原有commit结点上修改，而是用一个新的结点替换原来结点，所以，修改后commit id是不样的。
+
+        git commit --amend  修改最近一次提交的commit message
+        git rebase -i commitid  在需要改commit message的提交前面用r 也就是reword
+    --  合并提交
+        git rebase -i commitid  保留最老的提交为pick，其他提交前面的pick改为s，然后保存
+blame
+	git blame -L 1,10 demo.html 	截取 demo.html 文件 1-10 行历史信息。
+
+二分查找
+	git bisect start 		//开始
+	git bisect bad 			//告诉git当前为错误版本
+	git bisect good 515d922 //告诉git这个版本是正确的版本
+	
+	后续git会通过二分查找让你确认当前版本是否是正确的
+	如果是正确的 git bisect good
+	如果是粗我的 git bisect bad
+	
+	完成之后，重设你的head到你开始前的地方，否则你会处于一个诡异的地方
+	git bisect reset
+
+删除文件
+    rm file                                 //删除本地文件
+    git rm file                             //将暂存区的内容删除，但是如果工作区存在这个文件，则删除失败，记得再commit
+    git rm --cached file                    //将暂存区的file强制删除
+    git rm -r file                          //将工作区与暂存区的file强制删除
+
+标签操作
+    git tag v1.0                            //打一个新标签
+    git tag -a v1.4 -m 'my version 1.4'     //打标签的时候指定说明
+    git tag                                 //查看所有标签
+    git tag -d v0.1                         //标签打错了，也可以删除
+    git push origin v1.0                    //推送某个标签到远程 
+    git push origin --tags                  //一次性推送全部尚未推送到远程的本地标签
+    git push origin :refs/tags/<tagname>    //删除一个远程标签，先把本地标签删除
+    git show v1.0                           //可以看到说明文字
+    git tag <name>                          //用于新建一个标签，默认为HEAD，也可以指定一个commit id；
+    git tag -a <tagname> -m "blablabla..."  //可以指定标签信息；
+    git tag -s <tagname> -m "blablabla..."  //可以用PGP签名标签；
+
+远程仓库操作
+    git remote                                          //列出远端别名名
+    git remote show origin                              //列出了所有处于跟踪状态中的远端分支
+    git remote -v                                       //查看远程仓库别名详细信息，有对应的仓库地址
+    git remote add origin https://cralufei@github.com/cralufei/test.git
+    git remote rm origin                                //删除远端名
+    git remote rename origin paul                       //修改某个远程仓库在本地的简称
+
+    git clone https://github.com/jquery/jquery.git      //克隆
+
+    git fetch origin master                             //fetch 命令只是将远端的数据拉到本地仓库，并不自动合并到当前工作分支
+    git merge origin master
+
+    git pull origin master                              //
+    git push origin master                              //把该分支上的所有本地提交推送到远程库
+
+    git checkout -b dev origin/dev                      //将远程dev分支拉下来
+    git branch --set-upstream-to=origin/dev dev         //设置本地dev分支与远程origin/dev连接起来
+
+    git pull = git fetch + git merge
+    git pull --rebase = git fetch + git rebase
+    在rebase的过程中，有时也会有conflict，这时Git会停止rebase并让用户去解决冲突
+    解决完冲突后，用git add命令去更新这些内容，然后不用执行git-commit,直接执行git rebase --continue,这样git会继续apply余下的补丁。
+    在任何时候，都可以用git rebase --abort参数来终止rebase的行动，并且mywork分支会回到rebase开始前的状态。
+	
+	删除远程分支
+	git push origin --delete develop
+	
+	关联远程分支
+	git push --set-upstream origin branchName 		//将当前分支与远程分支关联起来，便于git push/git pull
+
+暂时保存现有工作
+    git stash                       //暂存工作
+    git stash list                  //查看所有的暂存工作
+    git stash pop                   //恢复工作
+    git stash apply stash@{0}       //恢复指定的暂存工作
+
+    git stash -u
+    没有被 track 的文件（即从来没有被 add 过的文件不会被 stash 起来，因为 Git 会忽略它们。如果想把这些文件也一起 stash，可以加上 -u 参数，它是 --include-untracked 的简写。
+
+gitignore
+    .gitignore这个文本文件记录了所有你希望被 Git 忽略的目录和文件。
+	文件 .gitignore 的格式规范如下：
+		所有空行或者以注释符号 ＃ 开头的行都会被 Git 忽略。
+		匹配模式最后跟反斜杠（/）说明要忽略的是目录。
+		要忽略指定模式以外的文件或目录，可以在模式前加上惊叹号（!）取反。
+	匹配
+		星号（*）匹配零个或多个任意字符；
+		[abc] 匹配任何一个列在方括号中的字符（这个例子要么匹配一个 a，要么匹配一个 b，要么匹配一个 c）
+		问号（?）只匹配一个任意字符；
+		如果在方括号中使用短划线分隔两个字符，表示所有在这两个字符范围内的都可以匹配（比如 [0-9] 表示匹配所有 0 到 9 的数字）。
+	例子
+		*.a            #忽略所有以.a为后缀的文件。
+		!lib.a         #但是lib.a这个文件除外，依然会被提交。
+		build/         #忽略build目录内的所有文件。
+		build/*.txt    #忽略build目录内以txt为后缀的文件。
+		git.c          #忽略名字为git.c的文件
+搭建Git服务
+    安装Git
+        yum install curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-devel
+        yum install git
+    创建Git账户
+        groupadd git
+        adduser git -g git
+        passwd git 
+
+        创建的git用户不允许登录shell，编辑/etc/passwd文件完成。找到类似下面的一行：
+        git:x:1001:1001:,,,:/home/git:/bin/bash
+        改为：
+        git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
+    初始化Git仓库
+        cd /data
+        mkdir gitrepo
+        chown git:git gitrepo/
+        cd gitrepo
+        git init --bare oneweekoneskill.git
+        chown -R git:git oneweekoneskill.git
+    其他客户端克隆代码
+        $ git clone git@192.168.45.4:/data/gitrepo/oneweekoneskill.git
+        Cloning into 'oneweekoneskill'...
+        warning: You appear to have cloned an empty repository.
+        Checking connectivity... done.
+    问题
+        如果Git clone的时候报错 SSL connect error 说明是curl的问题
+            解决方法：升级网络安全服务即可。
+            yum update nss
+问题
+    1.在命令行记住github的账号密码
+        隐藏的.git目录下设置config文件：
+        [credential]    
+            helper = store
+	3.git pull 和 git fetch的区别？
+        pull 根据不同的配置，可等于 fetch + merge 或 fetch + rebase。
+
+        工作区-> 暂存区 -> 本地仓库 <- 远程仓库副本 -> 远程仓库
+        远程仓库副本，可以理解为存在于本地的远程仓库缓存。
+
+        git fetch只是从远程仓库获取内容存在远程仓库副本中，并没有与本地仓库进行合并。可以通过git merge操作来合并到本地仓库。
+		
+		git pull  			=	 git fetch + git merge 
+		git pull --rebase 	= git fetch + git merge
+    4.git merge 与 git rebase的区别
+		git merge
+			如果符合Fast forward，就会使用Fast forward模式进行合并
+			如果不符合，Git会用两个分支的末端以及它们的共同祖先进行一次简单的三方合并计算，然后重新生成一个commit
+		git rebase 
+			把在一个分支里提交的改变移到另一个分支里重放一遍。
+			git checkout experiment
+			git rebase master
+			
+			它的原理是回到两个分支最近的共同祖先，根据当前分支(也就是要进行衍合的分支 experiment)后续的历次提交对象生成一系列文件补丁
+			然后以基底分支(也就是主干分支 master)最后一个提交对象为新的出发点
+			逐个应用之前准备好的补丁文件，最后会生成一个新的合并提交对象
+			从而改写 experiment 的提交历史，使它成为 master 分支的直接下游
+			
+			回到 master 分支，进行一次快进合并
+    5.Fast forward
+		Fast forward选项是直接将master的指针指向要合并的分支的位置
+		如果顺着一个分支走下去可以到达另一个分支的话，那么 Git 在合并两者时，只会简单地把指针右移。
+		因为这种单线的历史分支不存在任何需要解决的分歧，所以这种合并过程可以称为快进（Fast forward）。
+
+原理
+    工作区-》暂存区-》版本区
+
+    工作区有一个隐藏目录.git，这个不算工作区，而是Git的版本库。
+
+    Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git为我们自动创建的第一个分支master，以及指向master的一个指针叫HEAD。
+
+    我们把文件往Git版本库里添加的时候，是分两步执行的：
+    第一步是用git add把文件添加进去，实际上就是把文件修改添加到暂存区；
+    第二步是用git commit提交更改，实际上就是把暂存区的所有内容提交到当前分支。
+
+    HEAD是当前工作目录所对应的commit的引用，它是唯一的。
+    branch 只是一个指向 commit 的引用。
+    master其实是一个特殊的branch，它是Git的默认branch（俗称主branch/主分支）。
+
+    ^的用法：在 commit 的后面加一个或多个^号，可以把 commit往回偏移，偏移的数量是^ 的数量。例如：master^ 表示 master 指向的 commit 之前的那个 commit； HEAD^^ 表示 HEAD 所指向的 commit 往前数两个 commit。
+    ~的用法：在 commit 的后面加上~ 号和一个数，可以把 commit 往回偏移，偏移的数量是 ~ 号后面的数。例如：HEAD~5表示HEAD指向的commit往前数5个commit。
+
+	.git 目录的结构
+		$ tree .git
+		.git
+		├── HEAD
+		├── branches
+		├── config
+		├── description
+		├── hooks
+		│   ├── applypatch-msg.sample
+		│   ├── commit-msg.sample
+		│   ├── fsmonitor-watchman.sample
+		│   ├── post-update.sample
+		│   ├── pre-applypatch.sample
+		│   ├── pre-commit.sample
+		│   ├── pre-push.sample
+		│   ├── pre-rebase.sample
+		│   ├── pre-receive.sample
+		│   ├── prepare-commit-msg.sample
+		│   └── update.sample
+		├── info
+		│   └── exclude
+		├── objects
+		│   ├── info
+		│   └── pack
+		└── refs
+			├── remotes
+			│	├── origin
+			├── heads
+			└── tags
+			
+		HEAD : 当前分支
+			HEAD 文件是一个指向你当前所在分支的引用标识符。
+			这样的引用标识符——它看起来并不像一个普通的引用——其实并不包含 SHA-1 值
+			而是一个指向另外一个引用的指针。
+			$ cat .git/HEAD
+			ref: refs/heads/master
+			
+			$ git checkout test
+			$ cat .git/HEAD
+			ref: refs/heads/test
+		config : 仓库级的配置信息
+		description : 只会被Git的网络程序(如Github)使用，无需关注
+		index : 暂存区(staging area)
+		hooks : Git Hook 的示例脚本
+		info/exclude : 保存了一些你不想在 .gitignore 中配置的忽略文件的信息
+		objects : 所有工作目录的内容(content)会以 Git 对象(objects)的形式存放在这个目录
+		refs : 存放分支、tag的信息
+			heads
+			tags 
+				Tag 对象指向一个 commit 而不是一个 tree
+				它就像是一个分支引用，但是不会变化——永远指向同一个 commit，仅仅是提供一个更加友好的名字。
+				 
+				$ cat .git/refs/tags/v1.1
+				9585191f37f7b0fb9444f35a9bf50de191beadc2
+				
+				$ git cat-file -p 9585191f37f7b0fb9444f35a9bf50de191beadc2
+				object 1a410efbd13591db07496601ebc7a059dd55cfe9
+				type commit
+				tag v1.1
+				tagger Scott Chacon <schacon@gmail.com> Sat May 23 16:48:58 2009 -0700
+
+				test tag
+		
+	Git对象类型
+		Git 以一种类似 UNIX 文件系统但更简单的方式来存储内容。
+		所有内容以 tree 或 blob 对象存储，其中 tree 对象对应于 UNIX 中的目录，blob 对象则大致对应于 inodes 或文件内容。
+	
+		blob : 表示一个内容(注意不是文件)
+			存储的并不是文件名而仅仅是文件内容。
+			内容与头信息的 SHA-1 校验和
+			创建以该校验和前两个字符为名称的子目录
+			并以 (校验和) 剩下 38 个字符为文件命名 (保存至子目录下)。
+		tree : 表示一个目录
+			一个单独的 tree 对象包含一条或多条 tree 记录
+			每一条记录含有一个指向 blob 或子 tree 对象的 SHA-1 指针，并附有该对象的权限模式 (mode)、类型和文件名信息。
+		commit : 表示一次提交
+			commit 对象有格式很简单：
+				该时间点项目快照的顶层树对象
+				作者/提交者信息（从 Git 设置的 user.name 和 user.email中获得)
+				当前时间戳
+				一个空行
+				提交注释信息。
+		tag : 比较特殊，即是引用也有对象(可以人为是分支在某一时刻的快照)
+	Git对象存储
+		1.Git 以对象类型为起始内容构造一个文件头，然后添加一个空格，接着是数据内容的长度，最后是一个空字节 (null byte)
+			假设文件内容为"what is up, doc?",那么文件头为"blob 16\000"
+		2.Git 将文件头与原始数据内容拼接起来，并计算拼接后的新内容的 SHA-1 校验和。
+		3.Git 用 zlib 对数据内容进行压缩，最后将用 zlib 压缩后的内容写入磁盘。
+		4.需要指定保存对象的路径 (SHA-1 值的头两个字符作为子目录名称，剩余 38 个字符作为文件名保存至该子目录中)
+		
+	git pack 
+		git的每次提交都会用一个全新的对象来保存新的文件内容。
+		如果 Git 只完整保存其中一个，并保存另一个对象的差异内容，岂不更好？事实上 Git 可以那样做。
+		Git 往磁盘保存对象时默认使用的格式叫松散对象 (loose object) 格式。
+		Git 时不时地将这些对象打包至一个叫 packfile 的二进制文件以节省空间并提高效率。
+		当仓库中有太多的松散对象，或是手工调用 git gc 命令，或推送至远程服务器时，Git 都会这样做。
+		
+		$ git gc
+		Counting objects: 17, done.
+		Delta compression using 2 threads.
+		Compressing objects: 100% (13/13), done.
+		Writing objects: 100% (17/17), done.
+		Total 17 (delta 1), reused 10 (delta 0)
+		
+		$ find .git/objects -type f
+		.git/objects/71/08f7ecb345ee9d0084193f147cdad4d2998293
+		.git/objects/d6/70460b4b4aece5915caf5c68d12f560a9fe3e4
+		.git/objects/info/packs
+		.git/objects/pack/pack-7a16e4488ae40c7d2bc56ea2bd43e25212a66c45.idx
+		.git/objects/pack/pack-7a16e4488ae40c7d2bc56ea2bd43e25212a66c45.pack
+		
+		
+	git object 
+		cat .git/objects/188af0059c340637d09b88fdc2963f916b86f13b
+		显示乱码，因为Git将信息压缩成二进制文件。
+		但是git提供了一个能够帮助你探索它的api
+		git cat-file -t 188af00 查看对象类型
+		git cat-file -p 188af00 查看对象内容
+		
+		[root@lufei .git]# cat HEAD 
+		ref: refs/heads/master
+		[root@lufei .git]# cat refs/heads/master
+		8b6f6e23d6960cba51dceff0c03971b1537a01f9
+		[root@lufei .git]# git cat-file -t 8b6f6e23d6960cba51dceff0c03971b1537
+		commit
+		[root@lufei .git]# git cat-file -p 8b6f6e23d6960cba51dceff0c03971b1537
+		tree d9accfb75d8ee7e9d00ff9fe69016c46e4e7a8cc
+		parent d185e0cf64c6b8fab41fd56f762ec46263fd85dc
+		author luffy <893954253@qq.com> 1576287844 +0800
+		committer luffy <893954253@qq.com> 1576287844 +0800
+
+		新增git命令
+		
+		[root@lufei .git]# git cat-file -p d9accfb75d8ee7e9d00ff9fe69016c46e4e7a8cc
+		040000 tree ee5211d85098119650c8147e2847e4fe3a806adf    git-images
+		[root@lufei .git]# git cat-file -p ee5211d85098119650c8147e2847e4fe3a806adf
+		100644 blob 4e424684dbd66480828c3fe53d7d2d64cd20e718    git-command-1.png
+		100644 blob 188af0059c340637d09b88fdc2963f916b86f13b    git-command-2.jpg
+		100644 blob f424c895e6b640cd49feb9f42c7a0a1d0db55168    git-diff.png
+		100644 blob 6fd0c134d0fc8e13692700eaefb288de385ba0b0    git-merge-on-ff.png
+		100644 blob 498e38f887ed2ec924f72c1414aeceef5f95edc7    git-remote.png
+		100644 blob 1f2e1c63c84066468a3c0fd6c7273b3256a4a282    git-repository.jpg
+		
+		100644 表明这是一个普通文件。
+		100755 表示可执行文件
+		120000 表示符号链接
+		-----------------------------------------------------------------------
+		
+		
+		查看每个分支指向的提交
+		cat .git/refs/heads/master  
+		cat .git/refs/heads/feature1
+		cat .git/refs/heads/feature2
+	Git传输协议
+	Git gc
+		Git 会不定时地自动运行称为 "auto gc" 的命令。大部分情况下该命令什么都不处理。
+		不过要是存在太多松散对象 (loose object, 不在 packfile 中的对象) 或 packfile，Git 会进行调用 git gc 命令。
+		gc 指垃圾收集 (garbage collect)，此命令会做很多工作：
+		收集所有松散对象并将它们存入 packfile，合并这些 packfile 进一个大的 packfile，
+		然后将不被任何 commit 引用并且已存在一段时间 (数月) 的对象删除。
+		
+		可以手工运行 auto gc 命令：
+		$ git gc --auto
+		
+		再次强调，这个命令一般什么都不干。
+		如果有 7,000 个左右的松散对象或是 50 个以上的 packfile，Git 才会真正调用 gc 命令。
+		可以通过修改配置中的 gc.auto 和 gc.autopacklimit 来调整这两个阈值。
+		
+		gc 还会将所有引用 (references) 并入一个单独文件。假设仓库中包含以下分支和标签：
+		$ find .git/refs -type f
+		.git/refs/heads/experiment
+		.git/refs/heads/master
+		.git/refs/tags/v1.0
+		.git/refs/tags/v1.1
+		这时如果运行 git gc, refs 下的所有文件都会消失。
+		Git 会将这些文件挪到 .git/packed-refs 文件中去以提高效率，该文件是这个样子的：
+		$ cat .git/packed-refs
+		# pack-refs with: peeled
+		cac0cab538b970a37ea1e769cbbde608743bc96d refs/heads/experiment
+		ab1afef80fac8e34258ff41fc1b867c702daa24b refs/heads/master
+		cac0cab538b970a37ea1e769cbbde608743bc96d refs/tags/v1.0
+		9585191f37f7b0fb9444f35a9bf50de191beadc2 refs/tags/v1.1
+		^1a410efbd13591db07496601ebc7a059dd55cfe9
+		
+		当更新一个引用时，Git 不会修改这个文件，而是在 refs/heads 下写入一个新文件。
+		当查找一个引用的 SHA 时，Git 首先在 refs 目录下查找，如果未找到则到 packed-refs 文件中去查找。
+	其他
+		git count-objects -v 							//查看空间占用
+		git verify-pack -v .git/objects/pack/pack-3f8c0...bb.idx | sort -k 3 -n | tail -3
+		git rev-list --objects --all | grep 7a9eb2fb 	//查看某个提交的文件名
+
+Git学习网址	
+	http://iissnan.com/progit/
+	https://learngitbranching.js.org/	
+	https://marklodato.github.io/visual-git-guide/index-zh-cn.html （图解Git）
